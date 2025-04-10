@@ -97,6 +97,16 @@
             <button id="batch-delete">执行删除</button>
           </div>
         </div>
+        
+        <div class="operation-section">
+          <h3>数据同步</h3>
+          <p>将分类好的书签导出或导入</p>
+          <div class="sync-options">
+            <button id="export-bookmarks">导出书签数据</button>
+            <button id="import-bookmarks">导入书签数据</button>
+            <button id="github-sync">同步到GitHub</button>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -128,6 +138,22 @@
       <button id="confirm-move">确认移动</button>
     </div>
   </div>
+  
+  <!-- GitHub同步模态框 -->
+  <div class="modal" id="github-sync-modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>同步到GitHub</h2>
+      <p>请输入您的GitHub信息：</p>
+      <input type="text" id="github-username" placeholder="GitHub用户名">
+      <input type="text" id="github-repo" placeholder="仓库名称">
+      <input type="password" id="github-token" placeholder="个人访问令牌(Personal Access Token)">
+      <button id="confirm-github-sync">确认同步</button>
+    </div>
+  </div>
+  
+  <!-- 隐藏的文件输入框，用于导入书签数据 -->
+  <input type="file" id="import-file" accept=".json" style="display: none;">
   
   <script src="sidebar.js"></script>
 </body>

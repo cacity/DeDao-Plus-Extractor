@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const batchDeleteButton = document.getElementById('batch-delete');
   const lastSyncTimeElement = document.getElementById('last-sync-time');
   const syncNowButton = document.getElementById('sync-now');
+  const exportBookmarksButton = document.getElementById('export-bookmarks');
+  const importBookmarksButton = document.getElementById('import-bookmarks');
+  const githubSyncButton = document.getElementById('github-sync');
   
   // 模态框元素
   const addCategoryModal = document.getElementById('add-category-modal');
@@ -165,26 +168,65 @@ document.addEventListener('DOMContentLoaded', function() {
   // 分类书签全选按钮
   categorySelectAllButton.addEventListener('click', function() {
     // 全选或取消全选
-    const allCheckboxes = categoryBookmarksList.querySelectorAll('.bookmark-checkbox');
-    const isAllSelected = selectedBookmarks.category && 
+    var allCheckboxes = categoryBookmarksList.querySelectorAll('.bookmark-checkbox');
+    var isAllSelected = selectedBookmarks.category && 
                          selectedBookmarks.category.length === bookmarkData.categories[currentCategory].length;
     
     // 重置选中状态
     selectedBookmarks.category = [];
     
-    allCheckboxes.forEach((checkbox, index) => {
+    for (var i = 0; i < allCheckboxes.length; i++) {
+      var checkbox = allCheckboxes[i];
       if (!isAllSelected) {
         // 全选
         checkbox.checked = true;
-        selectedBookmarks.category.push(index);
+        selectedBookmarks.category.push(i);
       } else {
         // 取消全选
         checkbox.checked = false;
       }
-    });
+    }
     
     // 更新按钮文本
     this.textContent = isAllSelected ? '全选' : '取消全选';
+  });
+  
+  // 导出书签数据
+  exportBookmarksButton.addEventListener('click', function() {
+    exportBookmarkData();
+  });
+  
+  // 导入书签数据
+  importBookmarksButton.addEventListener('click', function() {
+    document.getElementById('import-file').click();
+  });
+  
+  // 监听文件选择
+  document.getElementById('import-file').addEventListener('change', function(event) {
+    var file = event.target.files[0];
+    if (file) {
+      importBookmarkData(file);
+    }
+  });
+  
+  // GitHub同步按钮
+  githubSyncButton.addEventListener('click', function() {
+    var githubSyncModal = document.getElementById('github-sync-modal');
+    githubSyncModal.style.display = 'block';
+  });
+  
+  // 确认GitHub同步
+  document.getElementById('confirm-github-sync').addEventListener('click', function() {
+    var username = document.getElementById('github-username').value;
+    var repo = document.getElementById('github-repo').value;
+    var token = document.getElementById('github-token').value;
+    
+    if (!username || !repo || !token) {
+      alert('请填写完整的GitHub信息');
+      return;
+    }
+    
+    syncToGitHub(username, repo, token);
   });
   
   // 归档书签全选按钮
@@ -297,10 +339,12 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateCategorySelect() {
     categorySelect.innerHTML = '';
     
-    for (let category in bookmarkData.categories) {
-      const option = document.createElement('option');
+    var categoryKeys = Object.keys(bookmarkData.categories);
+    for (var i = 0; i < categoryKeys.length; i++) {
+      var category = categoryKeys[i];
+      var option = document.createElement('option');
       option.value = category;
-      option.textContent = `${category} (${bookmarkData.categories[category].length})`;
+      option.textContent = category + ' (' + bookmarkData.categories[category].length + ')';
       
       if (category === currentCategory) {
         option.selected = true;
@@ -314,9 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateTargetCategorySelect() {
     targetCategorySelect.innerHTML = '';
     
-    for (let category in bookmarkData.categories) {
+    var categoryKeys = Object.keys(bookmarkData.categories);
+    for (var i = 0; i < categoryKeys.length; i++) {
+      var category = categoryKeys[i];
       if (category !== currentCategory) {
-        const option = document.createElement('option');
+        var option = document.createElement('option');
         option.value = category;
         option.textContent = category;
         targetCategorySelect.appendChild(option);
@@ -985,38 +1031,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 获取当前的搜索关键词
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    var searchTerm = document.getElementById('search-input').value.toLowerCase();
     if (!searchTerm) return;
     
-    const searchResults = [];
+    var searchResults = [];
     // 收集搜索结果中的所有书签及其所在分类
-    for (let category in bookmarkData.categories) {
-      bookmarkData.categories[category].forEach(bookmark => {
-        if (bookmark.title.toLowerCase().includes(searchTerm) || 
-            bookmark.url.toLowerCase().includes(searchTerm)) {
+    var categoryKeys = Object.keys(bookmarkData.categories);
+    for (var i = 0; i < categoryKeys.length; i++) {
+      var category = categoryKeys[i];
+      var bookmarks = bookmarkData.categories[category];
+      
+      for (var j = 0; j < bookmarks.length; j++) {
+        var bookmark = bookmarks[j];
+        if (bookmark.title.toLowerCase().indexOf(searchTerm) !== -1 || 
+            bookmark.url.toLowerCase().indexOf(searchTerm) !== -1) {
           searchResults.push({
-            bookmark,
-            category,
+            bookmark: bookmark,
+            category: category,
             index: bookmarkData.categories[category].indexOf(bookmark)
           });
         }
-      });
+      }
     }
     
     // 搜索归档中的书签
-    bookmarkData.archives.forEach(bookmark => {
-      if (bookmark.title.toLowerCase().includes(searchTerm) || 
-          bookmark.url.toLowerCase().includes(searchTerm)) {
+    for (var k = 0; k < bookmarkData.archives.length; k++) {
+      var archiveBookmark = bookmarkData.archives[k];
+      if (archiveBookmark.title.toLowerCase().indexOf(searchTerm) !== -1 || 
+          archiveBookmark.url.toLowerCase().indexOf(searchTerm) !== -1) {
         searchResults.push({
-          bookmark,
+          bookmark: archiveBookmark,
           isArchive: true,
-          index: bookmarkData.archives.indexOf(bookmark)
+          index: k
         });
       }
-    });
+    }
     
     // 获取选中的书签
-    const selectedItems = selectedBookmarks.search.map(index => searchResults[index]);
+    var selectedItems = [];
+    for (var m = 0; m < selectedBookmarks.search.length; m++) {
+      var index = selectedBookmarks.search[m];
+      selectedItems.push(searchResults[index]);
+    }
     
     // 根据不同的操作处理选中的书签
     switch(action) {
@@ -1027,10 +1083,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 先收集要移动的书签，按分类分组
-        const bookmarksToMove = {};
-        const archiveBookmarksToMove = [];
+        var bookmarksToMove = {};
+        var archiveBookmarksToMove = [];
         
-        selectedItems.forEach(item => {
+        for (var i = 0; i < selectedItems.length; i++) {
+          var item = selectedItems[i];
           if (!item.isArchive) {
             // 如果来自分类，按分类分组
             if (!bookmarksToMove[item.category]) {
@@ -1041,30 +1098,39 @@ document.addEventListener('DOMContentLoaded', function() {
             // 如果来自归档
             archiveBookmarksToMove.push(item);
           }
-        });
+        }
         
         // 处理分类中的书签，按照索引从大到小删除，避免索引变化
-        for (let category in bookmarksToMove) {
+        var categoryKeys = Object.keys(bookmarksToMove);
+        for (var j = 0; j < categoryKeys.length; j++) {
+          var category = categoryKeys[j];
           // 按索引从大到小排序
-          bookmarksToMove[category].sort((a, b) => b.index - a.index);
+          bookmarksToMove[category].sort(function(a, b) {
+            return b.index - a.index;
+          });
           
           // 从原分类中移除并添加到新分类
-          bookmarksToMove[category].forEach(item => {
+          for (var k = 0; k < bookmarksToMove[category].length; k++) {
+            var categoryItem = bookmarksToMove[category][k];
             // 从原分类中移除
-            bookmarkData.categories[category].splice(item.index, 1);
+            bookmarkData.categories[category].splice(categoryItem.index, 1);
             // 添加到新分类
-            bookmarkData.categories[targetCategory].push(item.bookmark);
-          });
+            bookmarkData.categories[targetCategory].push(categoryItem.bookmark);
+          }
         }
         
         // 处理归档中的书签，同样按索引从大到小删除
-        archiveBookmarksToMove.sort((a, b) => b.index - a.index);
-        archiveBookmarksToMove.forEach(item => {
-          // 从归档中移除
-          bookmarkData.archives.splice(item.index, 1);
-          // 添加到目标分类
-          bookmarkData.categories[targetCategory].push(item.bookmark);
+        archiveBookmarksToMove.sort(function(a, b) {
+          return b.index - a.index;
         });
+        
+        for (var m = 0; m < archiveBookmarksToMove.length; m++) {
+          var archiveItem = archiveBookmarksToMove[m];
+          // 从归档中移除
+          bookmarkData.archives.splice(archiveItem.index, 1);
+          // 添加到目标分类
+          bookmarkData.categories[targetCategory].push(archiveItem.bookmark);
+        }
         alert(`成功移动 ${selectedItems.length} 个书签到分类 "${targetCategory}"`);
         break;
         
@@ -1145,3 +1211,216 @@ document.addEventListener('DOMContentLoaded', function() {
     searchBookmarks(searchTerm);
   }
 });
+
+// 导出书签数据为JSON文件
+function exportBookmarkData() {
+  // 准备要导出的数据
+  var dataToExport = {
+    categories: bookmarkData.categories,
+    archives: bookmarkData.archives,
+    exportDate: new Date().toISOString(),
+    version: '1.0'
+  };
+  
+  // 创建JSON字符串
+  var jsonString = JSON.stringify(dataToExport, null, 2);
+  
+  // 创建Blob对象
+  var blob = new Blob([jsonString], {type: 'application/json'});
+  
+  // 创建下载链接
+  var downloadLink = document.createElement('a');
+  downloadLink.href = URL.createObjectURL(blob);
+  downloadLink.download = 'bookmark_data_' + new Date().toISOString().slice(0, 10) + '.json';
+  
+  // 触发下载
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  
+  alert('书签数据导出成功！');
+}
+
+// 从文件导入书签数据
+function importBookmarkData(file) {
+  var reader = new FileReader();
+  
+  reader.onload = function(event) {
+    try {
+      var importedData = JSON.parse(event.target.result);
+      
+      // 验证导入的数据格式
+      if (!importedData.categories || !importedData.archives) {
+        throw new Error('无效的书签数据格式');
+      }
+      
+      // 确认是否覆盖现有数据
+      if (confirm('导入将覆盖当前的所有书签数据，是否继续？')) {
+        // 更新数据
+        bookmarkData.categories = importedData.categories;
+        bookmarkData.archives = importedData.archives;
+        
+        // 保存到存储
+        updateBookmarkData();
+        
+        // 更新界面
+        updateCategorySelect();
+        renderCategoryBookmarks();
+        
+        alert('书签数据导入成功！');
+      }
+    } catch (error) {
+      alert('导入失败: ' + error.message);
+    }
+    
+    // 重置文件输入框
+    document.getElementById('import-file').value = '';
+  };
+  
+  reader.onerror = function() {
+    alert('读取文件失败，请重试');
+    document.getElementById('import-file').value = '';
+  };
+  
+  reader.readAsText(file);
+}
+
+// 同步到GitHub
+function syncToGitHub(username, repo, token) {
+  // 准备要上传的数据
+  var dataToSync = {
+    categories: bookmarkData.categories,
+    archives: bookmarkData.archives,
+    syncDate: new Date().toISOString(),
+    version: '1.0'
+  };
+  
+  // 创建JSON字符串
+  var content = JSON.stringify(dataToSync, null, 2);
+  
+  // 生成Base64编码的内容
+  var contentEncoded = btoa(unescape(encodeURIComponent(content)));
+  
+  // 生成文件名
+  var filename = 'bookmark_data.json';
+  
+  // 检查文件是否存在
+  fetch('https://api.github.com/repos/' + username + '/' + repo + '/contents/' + filename, {
+    headers: {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  })
+  .then(function(response) {
+    return response.json().catch(function() { return {}; });
+  })
+  .then(function(data) {
+    var method = 'PUT';
+    var url = 'https://api.github.com/repos/' + username + '/' + repo + '/contents/' + filename;
+    var body = {
+      message: '更新书签数据 - ' + new Date().toISOString(),
+      content: contentEncoded
+    };
+    
+    // 如果文件已存在，需要提供SHA
+    if (data.sha) {
+      body.sha = data.sha;
+    }
+    
+    // 上传文件
+    return fetch(url, {
+      method: method,
+      headers: {
+        'Authorization': 'token ' + token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github.v3+json'
+      },
+      body: JSON.stringify(body)
+    });
+  })
+  .then(function(response) {
+    if (!response.ok) {
+      throw new Error('上传失败: ' + response.statusText);
+    }
+    return response.json();
+  })
+  .then(function() {
+    // 关闭模态框
+    document.getElementById('github-sync-modal').style.display = 'none';
+    
+    // 清空输入框
+    document.getElementById('github-token').value = '';
+    
+    // 更新同步时间
+    var now = new Date();
+    lastSyncTimeElement.textContent = now.toLocaleString();
+    
+    // 保存同步时间和GitHub信息
+    chrome.storage.local.set({
+      lastSyncTime: now.toISOString(),
+      githubUsername: username,
+      githubRepo: repo
+    });
+    
+    alert('成功同步到GitHub！');
+  })
+  .catch(function(error) {
+    alert('同步失败: ' + error.message);
+  });
+}
+
+// 从 GitHub 导入书签数据
+function importFromGitHub(username, repo, token) {
+  var filename = 'bookmark_data.json';
+  
+  fetch('https://api.github.com/repos/' + username + '/' + repo + '/contents/' + filename, {
+    headers: {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  })
+  .then(function(response) {
+    if (!response.ok) {
+      throw new Error('获取文件失败: ' + response.statusText);
+    }
+    return response.json();
+  })
+  .then(function(data) {
+    // 解码文件内容
+    var content = decodeURIComponent(escape(atob(data.content)));
+    var importedData = JSON.parse(content);
+    
+    // 验证导入的数据格式
+    if (!importedData.categories || !importedData.archives) {
+      throw new Error('无效的书签数据格式');
+    }
+    
+    // 确认是否覆盖现有数据
+    if (confirm('导入将覆盖当前的所有书签数据，是否继续？')) {
+      // 更新数据
+      bookmarkData.categories = importedData.categories;
+      bookmarkData.archives = importedData.archives;
+      
+      // 保存到存储
+      updateBookmarkData();
+      
+      // 更新界面
+      updateCategorySelect();
+      renderCategoryBookmarks();
+      
+      // 更新同步时间
+      var now = new Date();
+      lastSyncTimeElement.textContent = now.toLocaleString();
+      
+      // 保存同步时间
+      chrome.storage.local.set({
+        lastSyncTime: now.toISOString()
+      });
+      
+      alert('从 GitHub 导入数据成功！');
+    }
+  })
+  .catch(function(error) {
+    alert('导入失败: ' + error.message);
+  });
+}
