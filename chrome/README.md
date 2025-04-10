@@ -32,6 +32,7 @@
 - 使用Chrome Storage API存储书签数据
 - 使用Chrome Bookmarks API获取原始书签数据
 - 使用Chrome Alarms API实现定期自动同步
+- 使用Chrome SidePanel API实现侧边栏功能
 
 ## 项目结构
 ```
@@ -45,6 +46,8 @@ chrome书签插件/
 ├── sidebar.js          # 侧边栏JavaScript
 ├── sidebar.css         # 侧边栏样式
 ├── background.js       # 后台脚本
+├── fix_all_issues.js   # 修复问题的脚本
+├── fix_category.js     # 修复分类功能的脚本
 └── README.md           # 项目说明文档
 ```
 
@@ -57,6 +60,9 @@ chrome书签插件/
 - [x] 批量操作功能实现
 - [x] 数据存储与同步功能
 - [x] 自动导入与定期同步功能
+- [x] 修复导出书签功能
+- [x] 修复新创建分类的使用问题
+- [x] 修复分类数量统计问题
 
 ## 安装方法
 1. 在Chrome浏览器中打开 chrome://extensions/
