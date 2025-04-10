@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "书签管家",
+  "version": "1.0",
+  "description": "一款强大的Chrome书签管理工具，支持自动分类、归档和批量操作",
+  "permissions": [
+    "bookmarks",
+    "storage",
+    "sidePanel",
+    "tabs",
+    "alarms"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "side_panel": {
+    "default_path": "sidebar.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
