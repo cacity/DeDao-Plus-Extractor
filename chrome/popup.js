@@ -1,7 +1,9 @@
 // popup.js - 弹出窗口的交互逻辑
 
 // 当弹出窗口加载完成时执行
+console.log('弹出窗口脚本开始加载');
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM已加载完成');
   // 获取DOM元素
   const totalBookmarksElement = document.getElementById('total-bookmarks');
   const totalCategoriesElement = document.getElementById('total-categories');
@@ -10,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const categoryListElement = document.getElementById('category-list');
   const openSidebarButton = document.getElementById('open-sidebar');
   const syncBookmarksButton = document.getElementById('sync-bookmarks');
+  const exportBookmarksButton = document.getElementById('export-bookmarks');
   const settingsButton = document.getElementById('settings-button');
   
   // 加载书签数据并更新界面
@@ -41,6 +44,39 @@ document.addEventListener('DOMContentLoaded', function() {
           syncBookmarksButton.disabled = false;
         }, 1000);
       }
+    });
+  });
+  
+  console.log('导出按钮已绑定点击事件');
+  exportBookmarksButton.addEventListener('click', function() {
+    console.log('导出按钮被点击');
+    
+    // 直接尝试导出 HTML 格式的书签，简化测试
+    alert('正在尝试导出书签，请查看控制台日志');
+    
+    // 显示导出中状态
+    exportBookmarksButton.textContent = '导出中...';
+    exportBookmarksButton.disabled = true;
+    
+    // 发送消息给后台脚本，请求导出书签
+    console.log('发送导出书签请求，格式：html');
+    chrome.runtime.sendMessage({action: 'exportBookmarks', format: 'html'}, function(response) {
+      console.log('收到导出响应：', response);
+      if (response && response.status === 'success') {
+        // 导出成功
+        console.log('导出成功，下载ID：', response.downloadId);
+        alert('导出成功！');
+      } else {
+        // 导出失败
+        console.error('导出失败：', response ? response.message : '未知错误');
+        alert('导出失败：' + (response ? response.message : '未知错误'));
+      }
+      
+      // 恢复按钮状态
+      setTimeout(() => {
+        exportBookmarksButton.textContent = '导出书签';
+        exportBookmarksButton.disabled = false;
+      }, 1000);
     });
   });
   

@@ -204,6 +204,16 @@ header {
   text-overflow: ellipsis;
 }
 
+.bookmark-category {
+  font-size: 12px;
+  color: #4285f4;
+  background-color: #e8f0fe;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
 .bookmark-actions {
   display: flex;
   gap: 4px;

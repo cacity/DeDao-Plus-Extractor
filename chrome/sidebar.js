@@ -451,6 +451,35 @@ document.addEventListener('DOMContentLoaded', function() {
     bookmarkUrl.className = 'bookmark-url';
     bookmarkUrl.textContent = bookmark.url;
     
+    // 创建书签分类标签
+    const bookmarkCategory = document.createElement('span');
+    bookmarkCategory.className = 'bookmark-category';
+    
+    // 根据不同类型显示分类信息
+    if (type === 'category') {
+      bookmarkCategory.textContent = `[分类: ${currentCategory}]`;
+    } else if (type === 'archive') {
+      bookmarkCategory.textContent = '[归档]';
+    } else if (type === 'search') {
+      // 对于搜索结果，查找书签所在的分类
+      let category = '未知';
+      
+      // 检查所有分类
+      for (let cat in bookmarkData.categories) {
+        if (bookmarkData.categories[cat].some(b => b.url === bookmark.url)) {
+          category = cat;
+          break;
+        }
+      }
+      
+      // 检查是否在归档中
+      if (category === '未知' && bookmarkData.archives.some(b => b.url === bookmark.url)) {
+        category = '归档';
+      }
+      
+      bookmarkCategory.textContent = `[分类: ${category}]`;
+    }
+    
     // 创建操作按钮容器
     const bookmarkActions = document.createElement('div');
     bookmarkActions.className = 'bookmark-actions';
@@ -466,6 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 组装书签项
     bookmarkInfo.appendChild(bookmarkTitle);
     bookmarkInfo.appendChild(bookmarkUrl);
+    bookmarkInfo.appendChild(bookmarkCategory);
     
     bookmarkActions.appendChild(openButton);
     
@@ -1214,31 +1244,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 导出书签数据为JSON文件
 function exportBookmarkData() {
-  // 准备要导出的数据
-  var dataToExport = {
-    categories: bookmarkData.categories,
-    archives: bookmarkData.archives,
-    exportDate: new Date().toISOString(),
-    version: '1.0'
-  };
-  
-  // 创建JSON字符串
-  var jsonString = JSON.stringify(dataToExport, null, 2);
-  
-  // 创建Blob对象
-  var blob = new Blob([jsonString], {type: 'application/json'});
-  
-  // 创建下载链接
-  var downloadLink = document.createElement('a');
-  downloadLink.href = URL.createObjectURL(blob);
-  downloadLink.download = 'bookmark_data_' + new Date().toISOString().slice(0, 10) + '.json';
-  
-  // 触发下载
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-  
-  alert('书签数据导出成功！');
+  // 从存储中获取书签数据
+  chrome.storage.local.get(['bookmarkData'], function(result) {
+    if (!result.bookmarkData) {
+      console.error('没有找到书签数据');
+      alert('没有找到可导出的书签数据，请先同步书签数据。');
+      return;
+    }
+    
+    // 准备要导出的数据
+    var dataToExport = {
+      categories: result.bookmarkData.categories,
+      archives: result.bookmarkData.archives,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+    
+    // 创建JSON字符串
+    var jsonString = JSON.stringify(dataToExport, null, 2);
+    
+    // 创建rBlob对象
+    var blob = new Blob([jsonString], {type: 'application/json'});
+    
+    // 创建下载链接
+    var downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = 'bookmark_data_' + new Date().toISOString().slice(0, 10) + '.json';
+    
+    // 触发下载
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    alert('书签数据导出成功！');
+  });
 }
 
 // 从文件导入书签数据
@@ -1256,6 +1295,14 @@ function importBookmarkData(file) {
       
       // 确认是否覆盖现有数据
       if (confirm('导入将覆盖当前的所有书签数据，是否继续？')) {
+        // 检查bookmarkData是否已初始化
+        if (bookmarkData === null) {
+          bookmarkData = {
+            categories: {},
+            archives: []
+          };
+        }
+        
         // 更新数据
         bookmarkData.categories = importedData.categories;
         bookmarkData.archives = importedData.archives;
@@ -1270,6 +1317,7 @@ function importBookmarkData(file) {
         alert('书签数据导入成功！');
       }
     } catch (error) {
+      console.error('导入错误:', error);
       alert('导入失败: ' + error.message);
     }
     
