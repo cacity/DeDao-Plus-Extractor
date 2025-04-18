@@ -1,15 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "书签管家",
+  "name": "得到内容提取器",
   "version": "1.0",
-  "description": "一款强大的Chrome书签管理工具，支持自动分类、归档和批量操作",
+  "description": "一款简洁实用的内容提取工具，可以提取网页上的文章内容并导出",
   "permissions": [
-    "bookmarks",
     "storage",
     "sidePanel",
     "tabs",
-    "alarms",
-    "downloads"
+    "downloads",
+    "clipboardWrite",
+    "activeTab",
+    "scripting"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://api.openai.com https://api.volcengine.com https://*.volcengine.com https://*.openai.com;"
+  },
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -29,5 +36,11 @@
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"]
+    }
+  ]
 }

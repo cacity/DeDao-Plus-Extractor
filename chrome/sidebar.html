@@ -3,157 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>书签管家 - 侧边栏</title>
+  <title>得到内容提取器 - 侧边栏</title>
   <link rel="stylesheet" href="sidebar.css">
+  <!-- 添加JSZip库，用于创建EPUB电子书 -->
+  <script src="jszip.min.js"></script>
 </head>
 <body>
   <div class="sidebar-container">
     <header>
       <div class="logo">
-        <img src="images/icon48.png" alt="书签管家">
-        <h1>书签管家</h1>
-      </div>
-      <div class="search-box">
-        <input type="text" id="search-input" placeholder="搜索书签...">
-        <button id="search-button">搜索</button>
+        <img src="images/icon48.png" alt="得到内容提取器">
+        <h1>得到内容提取器</h1>
       </div>
     </header>
     
-    <div class="tabs">
-      <button class="tab-button active" data-tab="categories">分类</button>
-      <button class="tab-button" data-tab="archives">归档</button>
-      <button class="tab-button" data-tab="operations">批量操作</button>
-    </div>
-    
-    <div class="tab-content">
-      <!-- 分类标签页 -->
-      <div class="tab-pane active" id="categories-tab">
-        <div class="category-selector">
-          <select id="category-select">
-            <!-- 分类选项将通过JavaScript动态生成 -->
-          </select>
-          <button id="add-category-button">添加分类</button>
+    <div class="main-content">
+      <!-- 标签导航栏 -->
+      <div class="tab-navigation">
+        <button class="tab-button active" data-tab="content-tab">内容提取</button>
+      </div>
+      
+      <!-- 内容提取标签页 -->
+      <div id="content-tab" class="tab-content active">
+        <div class="extractor-section">
+          <h3>内容提取设置</h3>
+          <div class="extractor-settings">
+            <div class="selector-input">
+  <label for="site-type">站点类型:</label>
+  <select id="site-type">
+    <option value="dedao" selected>得到</option>
+    <option value="zhihu">知乎</option>
+    <option value="jianshu">简书</option>
+    <option value="wechat">微信公众号</option>
+  </select>
+</div>
+<div class="selector-input">
+  <label for="css-selector">内容选择器:</label>
+  <input type="text" id="css-selector" value=".article-body" placeholder="输入CSS选择器">
+</div>
+<div class="selector-input">
+  <label for="title-selector">标题选择器:</label>
+  <input type="text" id="title-selector" value=".article-title.iget-common-c1" placeholder="输入标题选择器">
+</div>
+            <div class="checkbox-input">
+              <input type="checkbox" id="auto-save" checked>
+              <label for="auto-save">自动保存到下载文件夹</label>
+            </div>
+            <div class="button-group">
+              <button id="prev-article" class="navigation-button"><span class="prev-icon">◀</span> 上一篇</button>
+<button id="extract-content">提取内容</button>
+<button id="next-article" class="navigation-button">下一篇 <span class="next-icon">▶</span></button>
+<button id="auto-prev-article" class="navigation-button">自动上一篇</button>
+<button id="auto-next-article" class="navigation-button">自动下一篇</button>
+</div>
+<!-- 新增：自动上一篇批量操作区域 -->
+<div class="auto-prev-batch-group" style="margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+  <label for="auto-prev-count">向前</label>
+  <input type="number" id="auto-prev-count" min="1" max="100" value="5" style="width: 48px;">
+  <label for="auto-prev-interval">间隔</label>
+  <input type="number" id="auto-prev-interval" min="1" max="30" value="3" style="width: 48px;">
+  <span>秒</span>
+  <button id="auto-prev-batch-btn" class="navigation-button">上一篇自动化操作</button>
+</div>
+<div class="button-group">
+            </div>
+          </div>
         </div>
         
-        <div class="bookmark-list" id="category-bookmarks">
-          <!-- 书签列表将通过JavaScript动态生成 -->
-        </div>
-        
-        <div class="category-actions">
-          <button id="category-select-all">全选</button>
-          <button id="move-to-archive">归档选中项</button>
-          <button id="delete-from-category">删除选中项</button>
-          <button id="move-to-category">移动到...</button>
+        <div class="extractor-section">
+          <h3>下载列表</h3>
+          <div class="download-list-container">
+            <ul id="download-list" class="download-list">
+              <!-- 下载项将通过JavaScript动态生成 -->
+              <li class="download-item-empty">暂无下载记录</li>
+            </ul>
+          </div>
+          <div class="download-actions">
+            <button id="merge-selected">合并成EPUB</button>
+            <button id="merge-txt">合并成TXT</button>
+            <button id="select-all">全选</button>
+            <button id="clear-list">清空列表</button>
+          </div>
         </div>
       </div>
       
-      <!-- 归档标签页 -->
-      <div class="tab-pane" id="archives-tab">
-        <div class="bookmark-list" id="archive-bookmarks">
-          <!-- 归档书签列表将通过JavaScript动态生成 -->
-        </div>
-        
-        <div class="archive-actions">
-          <button id="archive-select-all">全选</button>
-          <button id="restore-from-archive">恢复选中项</button>
-          <button id="delete-from-archive">删除选中项</button>
-        </div>
-      </div>
-      
-      <!-- 批量操作标签页 -->
-      <div class="tab-pane" id="operations-tab">
-        <div class="operation-section">
-          <h3>批量分类</h3>
-          <p>根据关键词自动对所有未分类书签进行分类</p>
-          <button id="auto-classify-all">一键分类</button>
-        </div>
-        
-        <div class="operation-section">
-          <h3>批量归档</h3>
-          <p>根据最后访问时间归档不常用书签</p>
-          <div class="time-selector">
-            <select id="archive-time-select">
-              <option value="30">30天未访问</option>
-              <option value="60">60天未访问</option>
-              <option value="90">90天未访问</option>
-              <option value="180">180天未访问</option>
-            </select>
-            <button id="auto-archive">批量归档</button>
-          </div>
-        </div>
-        
-        <div class="operation-section">
-          <h3>批量删除</h3>
-          <p>根据条件批量删除书签</p>
-          <div class="delete-options">
-            <div class="delete-option">
-              <input type="checkbox" id="delete-duplicates">
-              <label for="delete-duplicates">删除重复书签</label>
-            </div>
-            <div class="delete-option">
-              <input type="checkbox" id="delete-broken">
-              <label for="delete-broken">删除失效链接</label>
-            </div>
-            <button id="batch-delete">执行删除</button>
-          </div>
-        </div>
-        
-        <div class="operation-section">
-          <h3>数据同步</h3>
-          <p>将分类好的书签导出或导入</p>
-          <div class="sync-options">
-            <button id="export-bookmarks">导出书签数据</button>
-            <button id="import-bookmarks">导入书签数据</button>
-            <button id="github-sync">同步到GitHub</button>
-          </div>
-        </div>
-      </div>
+
     </div>
     
     <footer>
-      <div class="sync-info">
-        <span>上次同步: <span id="last-sync-time">从未</span></span>
-        <button id="sync-now">立即同步</button>
+      <div class="info">
+        <span>得到内容提取器 v1.0</span>
       </div>
     </footer>
   </div>
-  
-  <!-- 模态框 -->
-  <div class="modal" id="add-category-modal">
-    <div class="modal-content">
-      <span class="close-button">&times;</span>
-      <h2>添加新分类</h2>
-      <input type="text" id="new-category-name" placeholder="输入分类名称">
-      <button id="confirm-add-category">确认添加</button>
-    </div>
-  </div>
-  
-  <div class="modal" id="move-to-category-modal">
-    <div class="modal-content">
-      <span class="close-button">&times;</span>
-      <h2>移动到分类</h2>
-      <select id="target-category-select">
-        <!-- 目标分类选项将通过JavaScript动态生成 -->
-      </select>
-      <button id="confirm-move">确认移动</button>
-    </div>
-  </div>
-  
-  <!-- GitHub同步模态框 -->
-  <div class="modal" id="github-sync-modal">
-    <div class="modal-content">
-      <span class="close-button">&times;</span>
-      <h2>同步到GitHub</h2>
-      <p>请输入您的GitHub信息：</p>
-      <input type="text" id="github-username" placeholder="GitHub用户名">
-      <input type="text" id="github-repo" placeholder="仓库名称">
-      <input type="password" id="github-token" placeholder="个人访问令牌(Personal Access Token)">
-      <button id="confirm-github-sync">确认同步</button>
-    </div>
-  </div>
-  
-  <!-- 隐藏的文件输入框，用于导入书签数据 -->
-  <input type="file" id="import-file" accept=".json" style="display: none;">
   
   <script src="sidebar.js"></script>
 </body>

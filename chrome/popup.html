@@ -3,58 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>书签管家</title>
-  <link rel="stylesheet" href="popup.css">
+  <title>得到内容提取器</title>
+  <style>
+    body {
+      width: 200px;
+      padding: 15px;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+    }
+    h1 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+  </style>
 </head>
 <body>
-  <div class="popup-container">
-    <header>
-      <h1>书签管家</h1>
-      <p>您的智能书签管理助手</p>
-    </header>
-    
-    <div class="stats-container">
-      <div class="stat-item">
-        <span class="stat-value" id="total-bookmarks">0</span>
-        <span class="stat-label">总书签数</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value" id="total-categories">0</span>
-        <span class="stat-label">分类数</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value" id="archived-bookmarks">0</span>
-        <span class="stat-label">已归档</span>
-      </div>
-    </div>
-    
-    <div class="actions-container">
-      <button id="open-sidebar" class="action-button primary">
-        打开侧边栏管理器
-      </button>
-      <button id="sync-bookmarks" class="action-button">
-        同步书签数据
-      </button>
-      <button id="export-bookmarks" class="action-button">
-        导出书签
-      </button>
-      <button id="settings-button" class="action-button">
-        设置
-      </button>
-    </div>
-    
-    <div class="quick-access">
-      <h2>快速访问</h2>
-      <div class="category-list" id="category-list">
-        <!-- 分类列表将通过JavaScript动态生成 -->
-      </div>
-    </div>
-    
-    <footer>
-      <p>上次同步: <span id="last-sync">从未</span></p>
-    </footer>
+  <h1>得到内容提取器</h1>
+  <div class="button-container">
+    <button id="open-sidebar">打开侧边栏提取内容</button>
   </div>
-  
+
   <script src="popup.js"></script>
 </body>
 </html>

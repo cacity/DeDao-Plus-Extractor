@@ -3,73 +3,13 @@
 // 当侧边栏加载完成时执行
 document.addEventListener('DOMContentLoaded', function() {
   // 获取DOM元素 - 内容提取标签页
-  const siteTypeSelect = document.getElementById('site-type');
   const cssSelectorInput = document.getElementById('css-selector');
   const titleSelectorInput = document.getElementById('title-selector');
   const autoSaveCheckbox = document.getElementById('auto-save');
   const extractContentButton = document.getElementById('extract-content');
-  const prevArticleButton = document.getElementById('prev-article');
-  const nextArticleButton = document.getElementById('next-article');
-  // 新增：获取自动上一篇和自动下一篇按钮
-  const autoPrevArticleButton = document.getElementById('auto-prev-article');
-  const autoNextArticleButton = document.getElementById('auto-next-article');
-  // 新增：获取批量操作相关的输入框和按钮
-  const autoPrevCountInput = document.getElementById('auto-prev-count'); // 次数输入框
-  const autoPrevIntervalInput = document.getElementById('auto-prev-interval'); // 间隔输入框
-  const autoPrevBatchBtn = document.getElementById('auto-prev-batch-btn'); // 自动化按钮
   const downloadList = document.getElementById('download-list');
   const mergeSelectedButton = document.getElementById('merge-selected');
   const clearListButton = document.getElementById('clear-list');
-
-  // 站点类型与选择器映射
-  const siteSelectorMap = {
-    dedao: {
-      css: '.article-body',
-      title: '.article-title.iget-common-c1'
-    },
-    zhihu: {
-      css: '.RichContent-inner',
-      title: '.QuestionHeader-title'
-    },
-    jianshu: {
-      css: '.article',
-      title: '.title'
-    },
-    wechat: {
-      css: '.rich_media_content',
-      title: '.rich_media_title'
-    }
-  };
-
-  // 根据域名自动选择站点类型
-  function detectSiteType() {
-    const host = window.location.host;
-    if (host.includes('zhihu.com')) return 'zhihu';
-    if (host.includes('jianshu.com')) return 'jianshu';
-    if (host.includes('mp.weixin.qq.com')) return 'wechat';
-    // 默认
-    return 'dedao';
-  }
-
-  // 根据站点类型切换选择器
-  function updateSelectorsBySite(siteType) {
-    const selectors = siteSelectorMap[siteType];
-    if (selectors) {
-      cssSelectorInput.value = selectors.css;
-      titleSelectorInput.value = selectors.title;
-    }
-  }
-
-  // 页面加载时自动检测并设置
-  const detectedSite = detectSiteType();
-  siteTypeSelect.value = detectedSite;
-  updateSelectorsBySite(detectedSite);
-
-  // 下拉框切换事件
-  siteTypeSelect.addEventListener('change', function() {
-    const selected = siteTypeSelect.value;
-    updateSelectorsBySite(selected);
-  });
   
   // 全局变量存储提取的标题和下载项
   let extractedTitle = '';
@@ -200,28 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 content = articleElements[0].innerText;
               }
             }
-            
-            // 强化处理多余的空格和空行
-            content = content
-              // 将连续的多个空格替换为单个空格
-              .replace(/[ \t]+/g, ' ')
-              // 先将所有空行标准化（只包含\n的行）
-              .replace(/\n[ \t]*\n/g, '\n')
-              // 将连续的多个空行压缩为一个空行
-              .replace(/\n{3,}/g, '\n')
-              // 删除行首和行尾的空格
-              .replace(/^[ \t]+|[ \t]+$/gm, '')
-              // 删除文本开头和结尾的空白行
-              .trim()
-              // 再次检查并处理可能遗漏的空行
-              .replace(/\n\s*\n\s*\n/g, '\n');
-              
-            // 处理特殊情况：对于MD格式的标题后添加一个空行，确保格式正确
-            content = content
-              .replace(/(^|\n)(#{1,6}\s.*?)(\n)(?!\n)/g, '$1$2\n\n')
-              // 处理列表项前后的空行
-              .replace(/(\n\n)([-*+]\s)/g, '\n$2')
-              .replace(/([^\n])(\n)([-*+]\s)/g, '$1\n\n$3');
             
             return {
               success: true,
@@ -380,9 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
       li.className = 'download-item';
       li.dataset.id = item.id;
       
-      // 添加拖拽属性
-      li.draggable = true;
-      
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.className = 'download-checkbox';
@@ -409,102 +324,8 @@ document.addEventListener('DOMContentLoaded', function() {
       li.appendChild(titleSpan);
       li.appendChild(dateSpan);
       
-      // 添加拖拽事件
-      li.addEventListener('dragstart', handleDragStart);
-      li.addEventListener('dragover', handleDragOver);
-      li.addEventListener('dragleave', handleDragLeave);
-      li.addEventListener('drop', handleDrop);
-      li.addEventListener('dragend', handleDragEnd);
-      
       downloadList.appendChild(li);
     });
-  }
-  
-  // 拖拽相关变量
-  let draggedItem = null;
-  
-  // 开始拖拽
-  function handleDragStart(e) {
-    draggedItem = this;
-    this.classList.add('dragging');
-    
-    // 设置拖拽数据
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', this.dataset.id);
-    
-    // 延迟添加半透明效果，以便能看到拖拽开始的视觉效果
-    setTimeout(() => {
-      this.style.opacity = '0.7';
-    }, 0);
-  }
-  
-  // 拖拽经过
-  function handleDragOver(e) {
-    e.preventDefault(); // 允许放置
-    e.dataTransfer.dropEffect = 'move';
-    
-    // 添加视觉指示
-    if (this !== draggedItem) {
-      this.classList.add('drag-over');
-    }
-    
-    return false;
-  }
-  
-  // 拖拽离开
-  function handleDragLeave(e) {
-    this.classList.remove('drag-over');
-  }
-  
-  // 放置
-  function handleDrop(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    // 移除视觉指示
-    this.classList.remove('drag-over');
-    
-    // 如果放置在自己上面，不做任何操作
-    if (draggedItem === this) {
-      return false;
-    }
-    
-    // 获取拖拽项和目标项的ID
-    const draggedItemId = parseInt(draggedItem.dataset.id);
-    const targetItemId = parseInt(this.dataset.id);
-    
-    // 找到对应的索引
-    const draggedIndex = downloadItems.findIndex(item => item.id === draggedItemId);
-    const targetIndex = downloadItems.findIndex(item => item.id === targetItemId);
-    
-    if (draggedIndex !== -1 && targetIndex !== -1) {
-      // 从数组中移除拖拽项
-      const [draggedItem] = downloadItems.splice(draggedIndex, 1);
-      
-      // 将拖拽项插入到目标位置
-      downloadItems.splice(targetIndex, 0, draggedItem);
-      
-      // 保存新的顺序到存储
-      chrome.storage.local.set({ 'downloadItems': downloadItems });
-      
-      // 重新渲染列表
-      renderDownloadList();
-    }
-    
-    return false;
-  }
-  
-  // 拖拽结束
-  function handleDragEnd(e) {
-    // 移除所有拖拽相关的样式
-    const items = document.querySelectorAll('.download-item');
-    items.forEach(item => {
-      item.classList.remove('dragging');
-      item.classList.remove('drag-over');
-      item.style.opacity = '';
-    });
-    
-    draggedItem = null;
   }
   
   // 格式化时间
@@ -565,83 +386,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('生成EPUB失败:', error);
         showNotification('生成EPUB失败: ' + error.message);
       });
-  }
-  
-  // 将选中项合并成TXT文件
-  function mergeSelectedToTxt() {
-    // 获取选中的项
-    const selectedItems = downloadItems.filter(item => item.selected);
-    
-    if (selectedItems.length === 0) {
-      showNotification('请先选择要合并的内容');
-      return;
-    }
-    
-    // 提示正在生成
-    showNotification('正在生成TXT文件...');
-    
-    // 生成TXT文件标题 (使用第一个选中项的标题)
-    const fileTitle = selectedItems[0].title;
-    
-    // 合并所有选中的内容
-    let txtContent = '';
-    
-    selectedItems.forEach((item, index) => {
-      // 添加标题和分隔线
-      txtContent += `\n\n${'='.repeat(30)}\n${item.title}\n${'='.repeat(30)}\n\n`;
-      
-      // 添加内容
-      txtContent += item.content;
-      
-      // 在每个项目后添加空行，除了最后一个
-      if (index < selectedItems.length - 1) {
-        txtContent += '\n\n';
-      }
-    });
-    
-    // 创建TXT Blob
-    const txtBlob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
-    
-    // 创建下载链接
-    const url = URL.createObjectURL(txtBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fileTitle}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    
-    // 清理
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
-    
-    showNotification('TXT文件生成成功');
-  }
-  
-  // 全选功能
-  function selectAllItems() {
-    if (downloadItems.length === 0) {
-      showNotification('暂无内容可选');
-      return;
-    }
-    
-    // 检查当前是否全部选中
-    const allSelected = downloadItems.every(item => item.selected);
-    
-    // 如果全部选中，则取消全选；否则全选
-    downloadItems.forEach(item => {
-      item.selected = !allSelected;
-    });
-    
-    // 保存到存储
-    chrome.storage.local.set({ 'downloadItems': downloadItems });
-    
-    // 重新渲染列表
-    renderDownloadList();
-    
-    // 显示通知
-    showNotification(allSelected ? '已取消全选' : '已全选所有内容');
   }
   
   // 将Markdown转换为HTML
@@ -822,172 +566,12 @@ ${chapters.map((chapter, index) => `    <navPoint id="navPoint-${index + 1}" pla
     return { opf, ncx };
   }
   
-  // 上一篇按钮功能实现
-  function navigateToPrevArticle() {
-    console.log('点击了上一篇按钮');
-    // 获取当前标签页
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      if (!tabs || tabs.length === 0) {
-        showNotification('无法获取当前标签页');
-        return;
-      }
-      
-      const tab = tabs[0];
-      
-      // 在页面中执行脚本，模拟点击上一篇按钮
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        function: function() {
-          try {
-            // 查找左侧页面上一篇按钮并点击
-            const prevButton = document.querySelector('.side-button-main .button-module .button .prev').closest('button');
-            if (prevButton) {
-              prevButton.click();
-              return { success: true, message: '已切换到上一篇' };
-            } else {
-              return { success: false, message: '未找到上一篇按钮' };
-            }
-          } catch (error) {
-            return { success: false, error: error.message };
-          }
-        }
-      })
-      .then(results => {
-        if (results && results.length > 0) {
-          const result = results[0].result;
-          if (result.success) {
-            showNotification(result.message);
-          } else {
-            showNotification(result.message || result.error || '切换失败');
-          }
-        }
-      });
-    });
-  }
-  
-  // 下一篇按钮功能实现
-  function navigateToNextArticle() {
-    console.log('点击了下一篇按钮');
-    // 获取当前标签页
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      if (!tabs || tabs.length === 0) {
-        showNotification('无法获取当前标签页');
-        return;
-      }
-      
-      const tab = tabs[0];
-      
-      // 在页面中执行脚本，模拟点击下一篇按钮
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        function: function() {
-          try {
-            // 查找左侧页面下一篇按钮并点击
-            // 根据提供的HTML，下一篇按钮没有prev类，而是直接使用iget-icon-more类
-            const nextButtons = document.querySelectorAll('.side-button-main .button-module .button .iget-icon-more');
-            // 找到不包含prev类的按钮（下一篇按钮）
-            let nextButton = null;
-            for (let i = 0; i < nextButtons.length; i++) {
-              if (!nextButtons[i].classList.contains('prev')) {
-                nextButton = nextButtons[i].closest('button');
-                break;
-              }
-            }
-            
-            if (nextButton) {
-              nextButton.click();
-              return { success: true, message: '已切换到下一篇' };
-            } else {
-              return { success: false, message: '未找到下一篇按钮' };
-            }
-          } catch (error) {
-            return { success: false, error: error.message };
-          }
-        }
-      })
-      .then(results => {
-        if (results && results.length > 0) {
-          const result = results[0].result;
-          if (result.success) {
-            showNotification(result.message);
-          } else {
-            showNotification(result.message || result.error || '切换失败');
-          }
-        }
-      });
-    });
-  }
-
   // 内容提取按钮事件
   extractContentButton.addEventListener('click', function() {
     console.log('点击了提取内容按钮');
     extractContent();
   });
   
-  // 上一篇按钮事件
-  prevArticleButton.addEventListener('click', function() {
-    navigateToPrevArticle();
-  });
-  
-  // 下一篇按钮事件
-  nextArticleButton.addEventListener('click', function() {
-    navigateToNextArticle();
-  });
-  
-  // 自动上一篇按钮事件
-  // 点击后依次自动点击“提取内容”，等待1秒后点击“上一篇”
-  autoPrevArticleButton.addEventListener('click', function() {
-    // 1. 触发“提取内容”按钮点击
-    extractContentButton.click();
-    // 2. 等待1秒后，触发“上一篇”按钮点击
-    setTimeout(function() {
-      prevArticleButton.click();
-    }, 1000); // 1000毫秒 = 1秒
-  });
-
-  // 自动下一篇按钮事件
-  // 点击后依次自动点击“提取内容”，等待1秒后点击“下一篇”
-  autoNextArticleButton.addEventListener('click', function() {
-    // 1. 触发“提取内容”按钮点击
-    extractContentButton.click();
-    // 2. 等待1秒后，触发“下一篇”按钮点击
-    setTimeout(function() {
-      nextArticleButton.click();
-    }, 1000); // 1000毫秒 = 1秒
-  });
-
-  // 批量自动上一篇操作
-  // 点击后，按输入的次数和间隔，循环执行“自动上一篇”操作
-  autoPrevBatchBtn.addEventListener('click', function() {
-    // 获取用户输入的次数和间隔（秒）
-    let count = parseInt(autoPrevCountInput.value, 10);
-    let interval = parseInt(autoPrevIntervalInput.value, 10);
-    // 校验输入
-    if (isNaN(count) || count < 1) count = 1;
-    if (isNaN(interval) || interval < 1) interval = 1;
-    // 禁用按钮防止重复点击
-    autoPrevBatchBtn.disabled = true;
-    autoPrevBatchBtn.textContent = '操作中...';
-    let current = 0;
-    // 定义递归函数，依次执行自动上一篇
-    function autoPrevStep() {
-      if (current >= count) {
-        // 全部操作完成，恢复按钮
-        autoPrevBatchBtn.disabled = false;
-        autoPrevBatchBtn.textContent = '上一篇自动化操作';
-        showNotification('批量自动上一篇操作完成');
-        return;
-      }
-      // 触发自动上一篇（模拟点击自动上一篇按钮）
-      autoPrevArticleButton.click();
-      current++;
-      // 继续下一次
-      setTimeout(autoPrevStep, interval * 1000);
-    }
-    // 启动第一次
-    autoPrevStep();
-  });
-
   // 清空列表按钮事件
   clearListButton.addEventListener('click', function() {
     if (downloadItems.length === 0) {
@@ -1006,17 +590,5 @@ ${chapters.map((chapter, index) => `    <navPoint id="navPoint-${index + 1}" pla
   // 合并成EPUB按钮事件
   mergeSelectedButton.addEventListener('click', function() {
     mergeSelectedItems();
-  });
-  
-  // 合并成TXT按钮事件
-  const mergeTxtButton = document.getElementById('merge-txt');
-  mergeTxtButton.addEventListener('click', function() {
-    mergeSelectedToTxt();
-  });
-  
-  // 全选按钮事件
-  const selectAllButton = document.getElementById('select-all');
-  selectAllButton.addEventListener('click', function() {
-    selectAllItems();
   });
 });
