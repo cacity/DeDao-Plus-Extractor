@@ -15,9 +15,7 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://api.openai.com https://api.volcengine.com https://*.volcengine.com https://*.openai.com;"
   },
-  "host_permissions": [
-    "<all_urls>"
-  ],
+
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -39,7 +37,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "*://*.dedao.cn/*",
+        "*://*.zhihu.com/*",
+        "*://*.jianshu.com/*",
+        "*://mp.weixin.qq.com/*"
+      ],
       "js": ["content-script.js"]
     }
   ]
